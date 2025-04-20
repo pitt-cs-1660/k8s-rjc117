@@ -47,11 +47,25 @@ spec:
         # mount non-sensitive environment vars from configmap ref
         # WORDPRESS_DB_HOST | WORDPRESS_DB_USER
         ##
-
+          - name: WORDPRESS_DB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: wordpress
+                key: host
+          - name: WORDPRESS_DB_USER
+            valueFrom:
+              configMapKeyRef:
+                name: wordpress
+                key: user
         ##
         # mount sensitive environment vars from secret ref
         # WORDPRESS_DB_PASSWORD (hint use the user-password key)
         ##
+          - name: WORDPRESS_DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: database
+                key: user-password
         ports:
         - containerPort: 80
           name: wordpress
@@ -59,7 +73,25 @@ spec:
       # define volume mounts here, be sure to reference
       # the PVC in your container spec
       ##
+        volumeMounts:
+        - name: wp-pv-claim
+          mountPath: /var/www/html
+      volumes:
+      - name: wp-pv-claim
+        persistentVolumeClaim:
+          claimName: wp-pv-claim
 ---
 ##
 # Create persistent volume claim here
 ##
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wp-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
